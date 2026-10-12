@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>A 值法让利测算器 · 通用商务报价工具</title>
+  <style>
+    :root {
+      --bg: #0a0a0a;
+      --bg-card: #111111;
+      --bg-input: #161616;
+      --border: #1f1f1f;
+      --text: #e0e0e0;
+      --text-dim: #888;
+      --text-dimmer: #666;
+      --accent: #3b82f6;
+      --accent-dim: #2563eb;
+      --ok: #22c55e;
+      --warn: #f59e0b;
+      --err: #ef4444;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+    .container { max-width: 1100px; margin: 0 auto; padding: 32px 20px; }
+
+    header { text-align: center; margin-bottom: 40px; padding-bottom: 24px; border-bottom: 1px solid var(--border); }
+    .badge { display: inline-block; padding: 4px 12px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 100px; font-size: 12px; color: var(--text-dim); margin-bottom: 16px; }
+    h1 { font-size: 36px; font-weight: 700; margin-bottom: 8px; background: linear-gradient(135deg, #fff 0%, var(--accent) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .subtitle { color: var(--text-dim); font-size: 16px; }
+
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    @media (max-width: 800px) { .grid { grid-template-columns: 1fr; } }
+
+    .panel { background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; padding: 24px; }
+    .panel h2 { font-size: 18px; margin-bottom: 16px; color: var(--text); }
+
+    .form-group { margin-bottom: 16px; }
+    label { display: block; font-size: 13px; color: var(--text-dim); margin-bottom: 6px; }
+    input, select { width: 100%; padding: 10px 14px; background: var(--bg-input); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 14px; transition: all 0.15s; }
+    input:focus, select:focus { outline: none; border-color: var(--accent); }
+    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+    .btn { padding: 12px 24px; border: none; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.15s; width: 100%; }
+    .btn-primary { background: linear-gradient(135deg, var(--accent), var(--accent-dim)); color: white; }
+    .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 4px 20px rgba(59, 130, 246, 0.3); }
+    .btn-secondary { background: var(--bg-input); color: var(--text); border: 1px solid var(--border); }
+    .btn-secondary:hover { background: #1a1a1a; }
+
+    .seg { background: var(--bg-input); border: 1px solid var(--border); border-radius: 10px; padding: 14px; margin-bottom: 12px; }
+    .seg-title { font-size: 13px; color: var(--accent); font-weight: 600; margin-bottom: 10px; }
+    .seg-row { display: flex; justify-content: space-between; padding: 4px 0; font-size: 13px; }
+    .seg-row .k { color: var(--text-dim); }
+    .seg-row .v { color: var(--text); font-family: 'SF Mono', Consolas, monospace; }
+
+    .result-success { border-color: var(--ok); box-shadow: 0 0 0 1px var(--ok); }
+    .result-warn { border-color: var(--warn); box-shadow: 0 0 0 1px var(--warn); }
+    .result-err { border-color: var(--err); box-shadow: 0 0 0 1px var(--err); }
+
+    .pill { display: inline-block; padding: 2px 10px; border-radius: 100px; font-size: 12px; margin-left: 8px; }
+    .pill-ok { background: rgba(34, 197, 94, 0.15); color: var(--ok); }
+    .pill-warn { background: rgba(245, 158, 11, 0.15); color: var(--warn); }
+    .pill-err { background: rgba(239, 68, 68, 0.15); color: var(--err); }
+
+    .example-link { color: var(--accent); text-decoration: none; font-size: 12px; cursor: pointer; }
+    .example-link:hover { text-decoration: underline; }
+
+    footer { text-align: center; padding: 40px 0 20px; color: var(--text-dimmer); font-size: 13px; border-top: 1px solid var(--border); margin-top: 40px; }
+    footer a { color: var(--text-dim); text-decoration: none; }
+    footer a:hover { color: var(--accent); }
+
+    .formula { background: var(--bg-input); padding: 16px; border-radius: 10px; font-family: 'SF Mono', Consolas, monospace; font-size: 13px; color: var(--text-dim); margin-bottom: 16px; }
+    .formula strong { color: var(--accent); }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <span class="badge">🚀 通用商务报价工具 · 5 秒出结果</span>
+      <h1>A 值法让利测算器</h1>
+      <p class="subtitle">输入 7 个数字，输出三段完整测算 · 任何项目制业务通用</p>
+    </header>
+
+    <div class="formula">
+      <strong>核心公式：</strong>让利 = A × ΔGPM × 系数　其中 A = CM ÷ CMR<br>
+      <strong>系数：</strong>下调（GPM 高→低）×1.13；上调（GPM 低→高）×1.14
+    </div>
+
+    <div class="grid">
+      <!-- 左：输入 -->
+      <div class="panel">
+        <h2>📊 输入参数</h2>
+
+        <div class="form-group">
+          <label>原 GPM (%)</label>
+          <input type="number" id="origGpm" value="18" placeholder="例如 18">
+        </div>
+
+        <div class="form-group">
+          <label>调整后 GPM (%)</label>
+          <input type="number" id="targetGpm" value="15" placeholder="例如 15">
+        </div>
+
+        <div class="form-group">
+          <label>CM（元）</label>
+          <input type="number" id="cm" value="8000000" placeholder="例如 8000000">
+        </div>
+
+        <div class="form-group">
+          <label>CMR (%)</label>
+          <input type="number" id="cmr" value="20" placeholder="例如 20">
+        </div>
+
+        <div class="form-group">
+          <label>含税总价（元）</label>
+          <input type="number" id="totalPrice" value="40000000" placeholder="例如 40000000">
+        </div>
+
+        <div class="form-group">
+          <label>台数</label>
+          <input type="number" id="qty" value="8" placeholder="例如 8">
+        </div>
+
+        <div class="form-group">
+          <label>调整方向</label>
+          <select id="direction">
+            <option value="down">高 → 低（下调让利，系数 1.13）</option>
+            <option value="up">低 → 高（上调加价，系数 1.14）</option>
+          </select>
+        </div>
+
+        <button class="btn btn-primary" onclick="calculate()">开始测算</button>
+
+        <div style="margin-top: 12px; text-align: center;">
+          <a class="example-link" onclick="loadExample('basic')">· 加载示例 1：客户砍价 3 个点</a><br>
+          <a class="example-link" onclick="loadExample('urgent')">· 加载示例 2：紧急订单调价上调</a>
+        </div>
+      </div>
+
+      <!-- 右：输出 -->
+      <div class="panel">
+        <h2>📋 测算结果 <span id="resultPill"></span></h2>
+
+        <div id="result">
+          <p style="color: var(--text-dimmer); text-align: center; padding: 40px 0;">
+            点击"开始测算"查看结果
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <footer>
+      <p>A 值法让利测算器 · 通用商务工具 · <a href="#">GitHub</a> · <a href="#">联系</a></p>
+    </footer>
+  </div>
+
+  <script>
+    function fmtMoney(n) {
+      return new Intl.NumberFormat('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n);
+    }
+    function fmtPct(n) {
+      return n.toFixed(4);
+    }
+
+    function calculate() {
+      const origGpm = parseFloat(document.getElementById('origGpm').value);
+      const targetGpm = parseFloat(document.getElementById('targetGpm').value);
+      const cm = parseFloat(document.getElementById('cm').value);
+      const cmr = parseFloat(document.getElementById('cmr').value);
+      const totalPrice = parseFloat(document.getElementById('totalPrice').value);
+      const qty = parseInt(document.getElementById('qty').value);
+      const direction = document.getElementById('direction').value;
+
+      if (!origGpm && origGpm !== 0 || !targetGpm && targetGpm !== 0 || !cmr || !qty) {
+        alert('请填写所有参数');
+        return;
+      }
+      if (cmr === 0) { alert('CMR 不能为 0'); return; }
+      if (qty <= 0) { alert('台数必须 > 0'); return; }
+
+      const coef = direction === 'down' ? 1.13 : 1.14;
+      const deltaGpm = targetGpm - origGpm;
+      const aValue = cm / cmr;
+      const profitChange = aValue * deltaGpm * coef;
+      const newTotal = totalPrice + profitChange;
+      const newUnit = newTotal / qty;
+      const paymentSeg = targetGpm;
+
+      let level, pillClass;
+      if (targetGpm >= -1.02) { level = '标准审批（一级主管）'; pillClass = 'pill-ok'; }
+      else if (targetGpm >= -10) { level = '上级审批（部门主管）'; pillClass = 'pill-warn'; }
+      else { level = '总部审批（集团层面）'; pillClass = 'pill-err'; }
+
+      // 审批建议
+      let advice;
+      if (targetGpm >= -1.02) advice = '→ 走一级主管审批，部门内可签批';
+      else if (targetGpm >= -10) advice = '→ 走上级主管审批，需提交部门级审批';
+      else advice = '→ 走总部审批，需提交集团级审批';
+
+      const html = `
+        <div class="seg">
+          <div class="seg-title">【段一】已知条件</div>
+          <div class="seg-row"><span class="k">原 GPM</span><span class="v">${origGpm}%</span></div>
+          <div class="seg-row"><span class="k">调整后 GPM</span><span class="v">${targetGpm}%</span></div>
+          <div class="seg-row"><span class="k">ΔGPM</span><span class="v">${fmtPct(deltaGpm)}%（${deltaGpm < 0 ? '下调' : '上调'}）</span></div>
+          <div class="seg-row"><span class="k">CM</span><span class="v">${fmtMoney(cm)} 元</span></div>
+          <div class="seg-row"><span class="k">CMR</span><span class="v">${cmr}%</span></div>
+          <div class="seg-row"><span class="k">含税总价</span><span class="v">${fmtMoney(totalPrice)} 元</span></div>
+          <div class="seg-row"><span class="k">台数</span><span class="v">${qty} 台</span></div>
+          <div class="seg-row"><span class="k">调整方向</span><span class="v">${direction === 'down' ? '高→低' : '低→高'}</span></div>
+          <div class="seg-row"><span class="k">系数</span><span class="v">${coef}</span></div>
+        </div>
+
+        <div class="seg">
+          <div class="seg-title">【段二】分步计算</div>
+          <div class="seg-row"><span class="k">A 值</span><span class="v">${fmtMoney(cm)} ÷ ${cmr} = ${fmtPct(aValue)}</span></div>
+          <div class="seg-row"><span class="k">让利</span><span class="v">${fmtPct(aValue)} × ${fmtPct(deltaGpm)}% × ${coef} = ${fmtMoney(profitChange)} 元</span></div>
+          <div class="seg-row"><span class="k">新总价</span><span class="v">${fmtMoney(totalPrice)} + (${fmtMoney(profitChange)}) = ${fmtMoney(newTotal)} 元</span></div>
+          <div class="seg-row"><span class="k">新单价</span><span class="v">${fmtMoney(newTotal)} ÷ ${qty} = ${fmtMoney(newUnit)} 元/台</span></div>
+        </div>
+
+        <div class="seg ${paymentSeg < -10 ? 'result-err' : paymentSeg < -1.02 ? 'result-warn' : 'result-success'}">
+          <div class="seg-title">【段三】最终结果</div>
+          <div class="seg-row"><span class="k">让利总额</span><span class="v">${fmtMoney(profitChange)} 元</span></div>
+          <div class="seg-row"><span class="k">新总价</span><span class="v">${fmtMoney(newTotal)} 元</span></div>
+          <div class="seg-row"><span class="k">新单价</span><span class="v">${fmtMoney(newUnit)} 元/台</span></div>
+          <div class="seg-row"><span class="k">调整后 GPM</span><span class="v">${targetGpm}%</span></div>
+          <div class="seg-row"><span class="k">审批级别</span><span class="v">${level}</span></div>
+        </div>
+
+        <div class="seg">
+          <div class="seg-title">【审批建议】</div>
+          <div class="seg-row"><span class="k">建议</span><span class="v">${advice}</span></div>
+        </div>
+      `;
+
+      const paymentSeg = targetGpm;
+      document.getElementById('result').innerHTML = html;
+      document.getElementById('resultPill').innerHTML = `<span class="pill ${pillClass}">${level}</span>`;
+    }
+
+    function loadExample(type) {
+      if (type === 'basic') {
+        document.getElementById('origGpm').value = 18;
+        document.getElementById('targetGpm').value = 15;
+        document.getElementById('cm').value = 8000000;
+        document.getElementById('cmr').value = 20;
+        document.getElementById('totalPrice').value = 40000000;
+        document.getElementById('qty').value = 8;
+        document.getElementById('direction').value = 'down';
+      } else {
+        document.getElementById('origGpm').value = 5;
+        document.getElementById('targetGpm').value = 8;
+        document.getElementById('cm').value = 500000;
+        document.getElementById('cmr').value = 25;
+        document.getElementById('totalPrice').value = 10000000;
+        document.getElementById('qty').value = 100;
+        document.getElementById('direction').value = 'up';
+      }
+      calculate();
+    }
+
+    // 默认计算
+    calculate();
+  </script>
+</body>
+</html>
